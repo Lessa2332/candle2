@@ -67,23 +67,36 @@
     renderer="colorManagement: true; alpha: true;"
   >
     <a-assets>
-      <a-asset-item id="candleModel" src="candle.glb"></a-asset-item>
       <audio id="gratitudeSound" src="message.mp3" preload="auto"></audio>
     </a-assets>
 
     <a-camera position="0 0 0.8"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
-      <!-- Свічка з Sketchfab -->
-      <a-gltf-model src="#candleModel" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+      <!-- Основа свічки: білий циліндр -->
+      <a-cylinder
+        position="0 0.08 0"
+        radius="0.08"
+        height="0.16"
+        color="#f8f8f8"
+        shadow="cast: true"
+      ></a-cylinder>
 
-      <!-- Полум’я (анімоване через scale + колір) -->
+      <!-- Фітіль -->
+      <a-cylinder
+        position="0 0.17 0"
+        radius="0.005"
+        height="0.02"
+        color="#222"
+      ></a-cylinder>
+
+      <!-- Полум’я (сфера з емісією) -->
       <a-entity
         id="flame"
-        geometry="primitive: sphere; radius: 0.06;"
-        material="color: #ffaa00; emissive: #ff5500; emissiveIntensity: 1; opacity: 0.85; transparent: true; blending: additive;"
-        position="0 0.18 0"
-        scale="1 1.3 1"
+        geometry="primitive: sphere; radius: 0.05;"
+        material="color: #ffaa00; emissive: #ff5500; emissiveIntensity: 1.2; opacity: 0.9; transparent: true; blending: additive;"
+        position="0 0.19 0"
+        scale="1 1.4 1"
       ></a-entity>
 
       <!-- Світло від полум’я -->
@@ -92,9 +105,9 @@
         type="point"
         color="#ffcc88"
         intensity="0.3"
-        distance="1.2"
+        distance="1.0"
         decay="2"
-        position="0 0.18 0"
+        position="0 0.19 0"
       ></a-light>
     </a-entity>
 
@@ -112,7 +125,7 @@
       let isTargetVisible = false;
       let recognition = null;
 
-      // SpeechRecognition (працює в Chrome/Edge)
+      // SpeechRecognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognition = new SpeechRecognition();
@@ -149,7 +162,6 @@
         speakBtn.disabled = true;
       }
 
-      // Події маркера
       candleTarget.addEventListener('targetFound', () => {
         isTargetVisible = true;
         speakBtn.disabled = false;
@@ -160,12 +172,11 @@
         speakBtn.disabled = true;
       });
 
-      // Активація свічки
       function activateCandle() {
         // Анімація полум’я
         flame.setAttribute('animation__scale', {
           property: 'scale',
-          to: '1.8 2.6 1.8',
+          to: '1.8 2.8 1.8',
           dur: 1000,
           easing: 'easeOutQuad'
         });
@@ -173,17 +184,17 @@
         // Анімація світла
         flameLight.setAttribute('animation__intensity', {
           property: 'intensity',
-          to: '1.3',
+          to: '1.4',
           dur: 1000,
           easing: 'easeOutQuad'
         });
 
-        // Відтворення звуку
+        // Звук
         gratitudeAudio.currentTime = 0;
         gratitudeAudio.volume = 0.7;
         gratitudeAudio.play().catch(e => console.warn('Звук заблоковано:', e));
 
-        // Тимчасове повідомлення
+        // Повідомлення
         const msg = document.createElement('div');
         msg.style.cssText = `
           position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -196,7 +207,6 @@
         setTimeout(() => msg.remove(), 3000);
       }
 
-      // Запуск голосу
       speakBtn.addEventListener('click', () => {
         if (!recognition || !isTargetVisible) return;
         speakBtn.disabled = true;
@@ -205,9 +215,5 @@
       });
     });
   </script>
-
-  <!-- Атрибуція -->
-  <!-- 3D model "Candle" by [author name] via Sketchfab, CC BY 4.0 -->
-  <!-- https://sketchfab.com/3d-models/candle-c408586d8c1547448c4ff47abb4fb981 -->
 </body>
 </html>
