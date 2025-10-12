@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>🕯️ Свічка Пам’яті</title>
 
   <!-- A-Frame + MindAR -->
@@ -14,7 +14,7 @@
       margin: 0;
       overflow: hidden;
       background: #000;
-      font-family: 'Inter', sans-serif;
+      font-family: system-ui, sans-serif;
     }
     #hint {
       position: absolute;
@@ -22,12 +22,11 @@
       left: 50%;
       transform: translateX(-50%);
       color: white;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 10px 16px;
+      background: rgba(0,0,0,0.6);
+      padding: 8px 16px;
       border-radius: 20px;
-      font-size: 16px;
+      font-size: 15px;
       text-align: center;
-      max-width: 90%;
       z-index: 1000;
     }
     #ui {
@@ -38,7 +37,7 @@
       z-index: 1000;
       text-align: center;
     }
-    button {
+    #speakBtn {
       background: #d4af37;
       color: black;
       border: none;
@@ -47,10 +46,14 @@
       border-radius: 30px;
       cursor: pointer;
       font-weight: bold;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     }
-    button:hover { opacity: 0.9; }
-    button:disabled { background: #555; color: #aaa; cursor: not-allowed; }
+    #speakBtn:hover { opacity: 0.9; }
+    #speakBtn:disabled {
+      background: #555;
+      color: #aaa;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -70,27 +73,29 @@
       <audio id="gratitudeSound" src="message.mp3" preload="auto"></audio>
     </a-assets>
 
-    <a-camera position="0 0 0.8"></a-camera>
+    <!-- Камера без look-controls -->
+    <a-camera position="0 0 0.8" look-controls="enabled: false"></a-camera>
 
+    <!-- Цільовий об’єкт (прив’язаний до маркера) -->
     <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
-      <!-- Основа свічки: білий циліндр -->
+      <!-- Основа свічки -->
       <a-cylinder
         position="0 0.08 0"
         radius="0.08"
         height="0.16"
-        color="#f8f8f8"
+        color="#111111" <!-- чорна — символ трауру -->
         shadow="cast: true"
       ></a-cylinder>
 
       <!-- Фітіль -->
       <a-cylinder
         position="0 0.17 0"
-        radius="0.005"
+        radius="0.004"
         height="0.02"
-        color="#222"
+        color="#333"
       ></a-cylinder>
 
-      <!-- Полум’я (сфера з емісією) -->
+      <!-- Полум’я -->
       <a-entity
         id="flame"
         geometry="primitive: sphere; radius: 0.05;"
@@ -99,7 +104,7 @@
         scale="1 1.4 1"
       ></a-entity>
 
-      <!-- Світло від полум’я -->
+      <!-- Світло -->
       <a-light
         id="flameLight"
         type="point"
@@ -111,6 +116,7 @@
       ></a-light>
     </a-entity>
 
+    <!-- Чорний фон -->
     <a-sky color="#000000"></a-sky>
   </a-scene>
 
@@ -123,10 +129,10 @@
       const gratitudeAudio = document.getElementById('gratitudeSound');
 
       let isTargetVisible = false;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       let recognition = null;
 
-      // SpeechRecognition
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      // Ініціалізація SpeechRecognition
       if (SpeechRecognition) {
         recognition = new SpeechRecognition();
         recognition.lang = 'uk-UA';
@@ -162,6 +168,7 @@
         speakBtn.disabled = true;
       }
 
+      // Події трекінгу
       candleTarget.addEventListener('targetFound', () => {
         isTargetVisible = true;
         speakBtn.disabled = false;
@@ -172,6 +179,7 @@
         speakBtn.disabled = true;
       });
 
+      // Активація свічки
       function activateCandle() {
         // Анімація полум’я
         flame.setAttribute('animation__scale', {
@@ -192,21 +200,22 @@
         // Звук
         gratitudeAudio.currentTime = 0;
         gratitudeAudio.volume = 0.7;
-        gratitudeAudio.play().catch(e => console.warn('Звук заблоковано:', e));
+        gratitudeAudio.play().catch(e => console.warn('Звук не програвся:', e));
 
-        // Повідомлення
+        // Візуальна подяка
         const msg = document.createElement('div');
+        msg.textContent = '🕯️ Дякую…';
         msg.style.cssText = `
           position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
           color: #ffd700; font-size: 24px; font-weight: bold;
           background: rgba(0,0,0,0.7); padding: 12px 24px; border-radius: 12px;
           z-index: 2000; pointer-events: none;
         `;
-        msg.textContent = '🕯️ Дякую…';
         document.body.appendChild(msg);
         setTimeout(() => msg.remove(), 3000);
       }
 
+      // Запуск розпізнавання
       speakBtn.addEventListener('click', () => {
         if (!recognition || !isTargetVisible) return;
         speakBtn.disabled = true;
