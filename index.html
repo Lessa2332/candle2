@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>🕯️ Свічка Пам’яті</title>
 
-    <!-- ✅ Правильний порядок: спочатку A-Frame, потім MindAR -->
+    <!-- ✅ Правильний порядок, без пробілів -->
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
@@ -13,7 +13,7 @@
       body, html {
         margin: 0;
         overflow: hidden;
-        background: black;
+        background: transparent; /* ✅ Прозорий фон */
         font-family: sans-serif;
       }
       #hint {
@@ -47,31 +47,36 @@
       "
       color-space="sRGB"
       embedded
-      renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true;"
+      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true;" <!-- ✅ Прозорий фон -->
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
     >
-      <a-assets>
-        <!-- 3D-модель з Sketchfab (370 вершин, low-poly) -->
-        <a-asset-item id="candleModel" src="./candle.glb"></a-asset-item>
-      </a-assets>
-
       <a-camera look-controls="enabled: false"></a-camera>
 
       <a-entity id="marker" mindar-image-target="targetIndex: 0">
-        <!-- Свічка з Sketchfab -->
-        <a-gltf-model
-          src="#candleModel"
+        <!-- Основа свічки (циліндр) -->
+        <a-cylinder
+          id="candleBody"
           position="0 0 0"
-          scale="0.8 0.8 0.8"
-          rotation="0 0 0"
-        ></a-gltf-model>
+          radius="0.1"
+          height="0.5"
+          color="#111111" <!-- чорна — символ трауру -->
+          shadow="cast: true"
+        ></a-cylinder>
 
-        <!-- Полум’я (додаємо окремо, бо в моделі його немає) -->
+        <!-- Фітіль -->
+        <a-cylinder
+          position="0 0.25 0"
+          radius="0.004"
+          height="0.02"
+          color="#333"
+        ></a-cylinder>
+
+        <!-- Полум’я (конус) -->
         <a-cone
           id="flame"
-          position="0 0.22 0"
-          radius-bottom="0.04"
+          position="0 0.27 0"
+          radius-bottom="0.05"
           radius-top="0.001"
           height="0.1"
           color="#ffb300"
@@ -87,12 +92,12 @@
           distance="1.5"
           decay="2"
           color="#ffcc80"
-          position="0 0.22 0"
+          position="0 0.27 0"
         ></a-light>
       </a-entity>
     </a-scene>
 
-    <!-- Звуки (зовні a-assets для надійності) -->
+    <!-- Звуки -->
     <audio id="igniteSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_41c9dba34a.mp3?filename=candle-lighting-110337.mp3" preload="auto"></audio>
     <audio id="extinguishSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_32bce3a9.mp3?filename=candle-extinguish-110338.mp3" preload="auto"></audio>
 
@@ -146,12 +151,5 @@
         }
       });
     </script>
-
-    <!-- Атрибуція моделі -->
-    <!--
-      3D модель "Candle" — low-poly, 370 вершин
-      Автор: https://sketchfab.com/3d-models/candle-c408586d8c1547448c4ff47abb4fb981
-      Ліцензія: CC BY 4.0
-    -->
   </body>
 </html>
