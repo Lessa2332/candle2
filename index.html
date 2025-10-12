@@ -13,7 +13,7 @@
       body, html {
         margin: 0;
         overflow: hidden;
-        background: transparent; /* ✅ Прозорий фон */
+        background: transparent;
         font-family: sans-serif;
       }
       #hint {
@@ -47,20 +47,20 @@
       "
       color-space="sRGB"
       embedded
-      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true;" <!-- ✅ Прозорий фон -->
+      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true;"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
     >
       <a-camera look-controls="enabled: false"></a-camera>
 
       <a-entity id="marker" mindar-image-target="targetIndex: 0">
-        <!-- Основа свічки (циліндр) -->
+        <!-- Основа свічки -->
         <a-cylinder
           id="candleBody"
           position="0 0 0"
           radius="0.1"
           height="0.5"
-          color="#111111" <!-- чорна — символ трауру -->
+          color="#111111"
           shadow="cast: true"
         ></a-cylinder>
 
@@ -72,7 +72,7 @@
           color="#333"
         ></a-cylinder>
 
-        <!-- Полум’я (конус) -->
+        <!-- Полум’я -->
         <a-cone
           id="flame"
           position="0 0.27 0"
@@ -97,9 +97,9 @@
       </a-entity>
     </a-scene>
 
-    <!-- Звуки -->
-    <audio id="igniteSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_41c9dba34a.mp3?filename=candle-lighting-110337.mp3" preload="auto"></audio>
-    <audio id="extinguishSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_32bce3a9.mp3?filename=candle-extinguish-110338.mp3" preload="auto"></audio>
+    <!-- ✅ Звуки з твого репозиторію -->
+    <audio id="igniteSound" src="message.mp3" preload="auto"></audio>
+    <audio id="extinguishSound" src="message.mp3" preload="auto"></audio>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
