@@ -5,17 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AR Свічка пам’яті</title>
 
-    <!-- A-Frame + MindAR -->
+    <!-- 1️⃣ Підключай A-Frame першою -->
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
+
+    <!-- 2️⃣ Потім MindAR (БЕЗ defer — бо defer виконує пізніше, коли AFRAME ще не ініціалізовано) -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-      body, html { margin: 0; overflow: hidden; background: black; }
+      body, html {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+      }
       #hint {
-        position: fixed; top: 10px; left: 0; right: 0;
-        text-align: center; color: #ffd27f; font-size: 1.2em;
-        font-family: sans-serif; text-shadow: 0 0 10px #ffbf00;
+        position: fixed;
+        top: 10px; left: 0; right: 0;
+        text-align: center;
+        color: #ffd27f;
+        font-size: 1.2em;
+        font-family: sans-serif;
+        text-shadow: 0 0 10px #ffbf00;
         animation: blink 2s infinite;
+        z-index: 10;
       }
       @keyframes blink {
         0%, 100% { opacity: 1; }
@@ -27,35 +38,38 @@
   <body>
     <div id="hint">🕯️ Наведи камеру на маркер, щоб запалити свічку</div>
 
+    <!-- 3️⃣ MindAR сцена -->
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind;"
+      mindar-image="imageTargetSrc: marker.mind;"
       color-space="sRGB"
       embedded
       renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true;"
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false">
+      device-orientation-permission-ui="enabled: true">
 
       <a-assets>
-        <a-sound id="ignite" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_41c9dba34a.mp3?filename=candle-lighting-110337.mp3"></a-sound>
-        <a-sound id="extinguish" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_32bce3a9.mp3?filename=candle-extinguish-110338.mp3"></a-sound>
+        <audio id="ignite" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_41c9dba34a.mp3?filename=candle-lighting-110337.mp3"></audio>
+        <audio id="extinguish" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_32bce3a9.mp3?filename=candle-extinguish-110338.mp3"></audio>
       </a-assets>
 
       <a-camera look-controls="enabled: false"></a-camera>
 
-      <!-- Об'єкт, що з’являється при розпізнаванні -->
       <a-entity id="marker" mindar-image-target="targetIndex: 0">
 
         <!-- Тіло свічки -->
         <a-cylinder id="candle" position="0 0 0" radius="0.12" height="0.6" color="#fff8e1"
           material="roughness: 0.8; metalness: 0.1;"></a-cylinder>
 
-        <!-- Вогник -->
-        <a-cone id="flame" position="0 0.38 0" radius-bottom="0.05" radius-top="0.001"
-          height="0.12" color="#ffb300" material="emissive:#ffb300; emissiveIntensity:1.5; transparent:true; opacity:0.9;">
+        <!-- Полум’я -->
+        <a-cone id="flame" position="0 0.38 0"
+          radius-bottom="0.05" radius-top="0.001" height="0.12"
+          color="#ffb300"
+          material="emissive:#ffb300; emissiveIntensity:1.5; transparent:true; opacity:0.9;">
         </a-cone>
 
         <!-- Світло -->
-        <a-light id="light" type="point" intensity="1.2" distance="2" color="#ffcc80" position="0 0.5 0"></a-light>
+        <a-light id="light" type="point" intensity="0" distance="2"
+          color="#ffcc80" position="0 0.5 0"></a-light>
       </a-entity>
     </a-scene>
 
@@ -64,39 +78,36 @@
         const marker = document.querySelector("#marker");
         const flame = document.querySelector("#flame");
         const light = document.querySelector("#light");
-        const soundIgnite = document.querySelector("#ignite");
-        const soundExt = document.querySelector("#extinguish");
+        const ignite = document.querySelector("#ignite");
+        const extinguish = document.querySelector("#extinguish");
         let burning = false;
 
-        // Початковий стан — вимкнено
         flame.setAttribute("visible", false);
         light.setAttribute("intensity", 0);
 
-        // Натискання — перемикає стан
+        // Клік — запалює або гасить
         window.addEventListener("click", () => {
           burning = !burning;
           if (burning) {
             flame.setAttribute("visible", true);
-            soundIgnite.components.sound.playSound();
+            ignite.play();
             animateFlame();
           } else {
             flame.setAttribute("visible", false);
-            soundExt.components.sound.playSound();
+            extinguish.play();
             light.setAttribute("intensity", 0);
           }
         });
 
-        // Анімація пульсації вогню
         function animateFlame() {
           if (!burning) return;
           const scale = 1 + Math.random() * 0.2;
           const intensity = 1 + Math.random() * 0.3;
-          flame.setAttribute("scale", {x: scale, y: scale, z: scale});
+          flame.setAttribute("scale", { x: scale, y: scale, z: scale });
           light.setAttribute("intensity", intensity);
           requestAnimationFrame(animateFlame);
         }
 
-        // Події при знаходженні / втраті маркера
         marker.addEventListener("targetFound", () => {
           document.querySelector("#hint").innerText = "🔥 Натисни, щоб запалити свічку";
         });
