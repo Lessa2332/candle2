@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>AR Свічка пам’яті</title>
+    <title>🕯️ Свічка Пам’яті</title>
 
-    <!-- ✅ Правильний порядок, без пробілів, без defer -->
+    <!-- ✅ Правильний порядок: спочатку A-Frame, потім MindAR -->
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
@@ -37,36 +37,62 @@
   </head>
 
   <body>
-    <div id="hint">🕯️ Наведи камеру на маркер, щоб запалити свічку</div>
+    <div id="hint">🕯️ Наведи камеру на маркер</div>
 
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind;"
+      mindar-image="
+        imageTargetSrc: ./targets.mind;
+        videoConstraints: { facingMode: { ideal: 'environment' } };
+        autoStart: true;
+      "
       color-space="sRGB"
       embedded
       renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true;"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
     >
+      <a-assets>
+        <!-- 3D-модель з Sketchfab (370 вершин, low-poly) -->
+        <a-asset-item id="candleModel" src="./candle.glb"></a-asset-item>
+      </a-assets>
+
       <a-camera look-controls="enabled: false"></a-camera>
 
       <a-entity id="marker" mindar-image-target="targetIndex: 0">
-        <!-- Свічка -->
-        <a-cylinder id="candle" position="0 0 0" radius="0.12" height="0.6" color="#fff8e1"
-          material="roughness: 0.8; metalness: 0.1;"></a-cylinder>
+        <!-- Свічка з Sketchfab -->
+        <a-gltf-model
+          src="#candleModel"
+          position="0 0 0"
+          scale="0.8 0.8 0.8"
+          rotation="0 0 0"
+        ></a-gltf-model>
 
-        <!-- Полум’я -->
-        <a-cone id="flame" position="0 0.38 0" radius-bottom="0.05" radius-top="0.001"
-          height="0.12" color="#ffb300"
-          material="emissive:#ffb300; emissiveIntensity:1.5; transparent:true; opacity:0.9;"
-          visible="false">
-        </a-cone>
+        <!-- Полум’я (додаємо окремо, бо в моделі його немає) -->
+        <a-cone
+          id="flame"
+          position="0 0.22 0"
+          radius-bottom="0.04"
+          radius-top="0.001"
+          height="0.1"
+          color="#ffb300"
+          material="emissive:#ff5500; emissiveIntensity:2; transparent:true; opacity:0.9;"
+          visible="false"
+        ></a-cone>
 
         <!-- Світло -->
-        <a-light id="light" type="point" intensity="0" distance="2" color="#ffcc80" position="0 0.5 0"></a-light>
+        <a-light
+          id="light"
+          type="point"
+          intensity="0"
+          distance="1.5"
+          decay="2"
+          color="#ffcc80"
+          position="0 0.22 0"
+        ></a-light>
       </a-entity>
     </a-scene>
 
-    <!-- Аудіо (зовні a-assets — простіше керувати) -->
+    <!-- Звуки (зовні a-assets для надійності) -->
     <audio id="igniteSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_41c9dba34a.mp3?filename=candle-lighting-110337.mp3" preload="auto"></audio>
     <audio id="extinguishSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_32bce3a9.mp3?filename=candle-extinguish-110338.mp3" preload="auto"></audio>
 
@@ -82,10 +108,9 @@
         let burning = false;
         let isTargetVisible = false;
 
-        // Події маркера
         marker.addEventListener("targetFound", () => {
           isTargetVisible = true;
-          hint.innerText = "🔥 Натисни, щоб запалити свічку";
+          hint.innerText = "🔥 Торкнись, щоб запалити свічку";
         });
 
         marker.addEventListener("targetLost", () => {
@@ -93,7 +118,6 @@
           hint.innerText = "🕯️ Наведи камеру на маркер";
         });
 
-        // Клік — запалити/загасити
         document.body.addEventListener("click", () => {
           if (!isTargetVisible) return;
 
@@ -112,16 +136,22 @@
           }
         });
 
-        // Анімація полум’я
         function animateFlame() {
           if (!burning) return;
-          const scale = 1 + Math.random() * 0.2;
-          const intensity = 1 + Math.random() * 0.3;
+          const scale = 1 + Math.random() * 0.25;
+          const intensity = 1.2 + Math.random() * 0.4;
           flame.object3D.scale.set(scale, scale, scale);
           light.setAttribute("intensity", intensity);
           requestAnimationFrame(animateFlame);
         }
       });
     </script>
+
+    <!-- Атрибуція моделі -->
+    <!--
+      3D модель "Candle" — low-poly, 370 вершин
+      Автор: https://sketchfab.com/3d-models/candle-c408586d8c1547448c4ff47abb4fb981
+      Ліцензія: CC BY 4.0
+    -->
   </body>
 </html>
