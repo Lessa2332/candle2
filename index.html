@@ -90,42 +90,39 @@
         <div style="margin-top: 20px; font-size: 1.2em;">Наведи камеру на маркер! 😊🔥</div>
     </div>
 
-    <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind;"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false"
-        loading-screen="enabled: false"
-        embedded
-        renderer="colorManagement: true; physicallyCorrectLights: true;"
-        touch-gestures
-    >
-        <a-assets>
-            <audio id="bg-music" src="./message.mp3" preload="auto" loop></audio>
-            <img id="candle-texture" src="./tilo.png">
-        </a-assets>
+<a-scene
+    mindar-image="imageTargetSrc: ./targets.mind;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    loading-screen="enabled: false"
+    embedded
+    renderer="colorManagement: true; physicallyCorrectLights: true;"
+    touch-gestures
+>
+    <a-assets>
+        <audio id="bg-music" src="./message.mp3" preload="auto" loop></audio>
+        <img id="candle-texture" src="./tilo.png">
+    </a-assets>
 
-        <a-camera
-            id="camera"
-            position="0 0 1.5"
-            look-controls="enabled: false"
-        ></a-camera>
+    <a-entity light="type: ambient; color: #FFFFFF; intensity: 0.5"></a-entity> <!-- Додане освітлення -->
 
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
-                <!-- Тіло свічки з текстурою -->
-                <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" src="#candle-texture" material="opacity: 1; transparent: false"></a-cylinder>
-                
-                <!-- Полум'я з градієнтом кольорів прапора України -->
-                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FFD700" material="shader: gradient; topColor: #FFD700; bottomColor: #0057B7; opacity: 0.8; transparent: true" emissive="#FFD700" emissive-intensity="0" visible="false">
-                    <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
-                    <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
-                </a-cone>
-                
-                <!-- Світло від полум'я, спочатку вимкнене -->
-                <a-light id="flame-light" type="point" color="#FFD700" intensity="0" distance="5" position="0 0.45 0"></a-light>
-            </a-entity>
+    <a-camera
+        id="camera"
+        position="0 0 1.5"
+        look-controls="enabled: false"
+    ></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0">
+        <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
+            <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" src="#candle-texture" material="src: #candle-texture; opacity: 1; transparent: false"></a-cylinder>
+            <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FFD700" material="shader: gradient; topColor: #FFD700; bottomColor: #0057B7; opacity: 0.8; transparent: true" emissive="#FFD700" emissive-intensity="0" visible="false">
+                <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
+                <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
+            </a-cone>
+            <a-light id="flame-light" type="point" color="#FFD700" intensity="0" distance="5" position="0 0.45 0"></a-light>
         </a-entity>
-    </a-scene>
+    </a-entity>
+</a-scene>
 
     <div class="controls">
         <button id="sound-btn" class="sound-btn">Увімкнути звук</button>
@@ -372,3 +369,4 @@
     </script>
 </body>
 </html>
+
