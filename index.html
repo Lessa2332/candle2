@@ -115,14 +115,14 @@
                 <!-- Тіло свічки з текстурою -->
                 <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" src="#candle-texture" material="opacity: 1; transparent: false"></a-cylinder>
                 
-                <!-- Полум'я (конус, який буде масштабуватися по Y, спочатку невидиме) -->
-                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FF4500" emissive="#FF4500" emissive-intensity="0" material="opacity: 0; transparent: true" visible="false">
+                <!-- Полум'я з градієнтом кольорів прапора України -->
+                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FFD700" material="shader: gradient; topColor: #FFD700; bottomColor: #0057B7; opacity: 0.8; transparent: true" emissive="#FFD700" emissive-intensity="0" visible="false">
                     <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
                     <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
                 </a-cone>
                 
                 <!-- Світло від полум'я, спочатку вимкнене -->
-                <a-light id="flame-light" type="point" color="#FF4500" intensity="0" distance="5" position="0 0.45 0"></a-light>
+                <a-light id="flame-light" type="point" color="#FFD700" intensity="0" distance="5" position="0 0.45 0"></a-light>
             </a-entity>
         </a-entity>
     </a-scene>
@@ -134,6 +134,32 @@
     </div>
 
     <script>
+        // Реєстрація кастомного шейдера для градієнта
+        AFRAME.registerShader('gradient', {
+            schema: {
+                topColor: {type: 'color', default: '#FFD700'},
+                bottomColor: {type: 'color', default: '#0057B7'},
+                opacity: {type: 'number', default: 1.0}
+            },
+            vertexShader: [
+                'varying vec2 vUv;',
+                'void main() {',
+                '    vUv = uv;',
+                '    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+                '}'
+            ].join('\n'),
+            fragmentShader: [
+                'uniform vec3 topColor;',
+                'uniform vec3 bottomColor;',
+                'uniform float opacity;',
+                'varying vec2 vUv;',
+                'void main() {',
+                '    vec3 color = mix(bottomColor, topColor, vUv.y);',
+                '    gl_FragColor = vec4(color, opacity);',
+                '}'
+            ].join('\n')
+        });
+
         // Адаптивність для повного екрану
         function fixHeight() {
             document.body.style.height = window.innerHeight + 'px';
@@ -157,14 +183,14 @@
         // Компонент для обробки сенсорних жестів
         AFRAME.registerComponent('touch-gestures', {
             schema: {
-                minScale: { type: 'number', default: 0.2 },
-                maxScale: { type: 'number', default: 3.0 },
-                rotationSpeed: { type: 'number', default: 2.0 }
+                minScale: {type: 'number', default: 0.2},
+                maxScale: {type: 'number', default: 3.0},
+                rotationSpeed: {type: 'number', default: 2.0}
             },
             init: function () {
                 this.isRotating = false;
                 this.isPinching = false;
-                this.startPos = { x: 0, y: 0 };
+                this.startPos = {x: 0, y: 0};
                 this.currentScale = 1;
                 this.candle = document.querySelector('#candle');
 
@@ -220,7 +246,7 @@
         // Функція для ініціалізації мікрофона та аналізу аудіо
         async function initMic() {
             try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                micStream = await navigator.mediaDevices.getUserMedia({audio: true});
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioContext.createMediaStreamSource(micStream);
                 analyser = audioContext.createAnalyser();
@@ -244,7 +270,10 @@
                 sum += dataArray[i];
             }
             const avg = sum / dataArray.length;
-            const volumeThreshold = 0.1; // Поріг гучності для запалювання
+            const volume = Math.min(1, avg / 128); // Нормалізоване значення гучності
+            console.log("Гучність:", volume); // Для відладки
+
+            const volumeThreshold = 0.1; // Поріг гучності
 
             if (avg / 128 > volumeThreshold && !isFlameLit) {
                 isFlameLit = true;
@@ -254,11 +283,10 @@
                 flameLight.setAttribute('intensity', '1');
                 console.log("Полум'я запалено!");
             } else if (avg / 128 <= volumeThreshold && isFlameLit) {
-                // Залишаємо полум'я активним після запалювання
+                // Залишаємо полум'я активним
             }
 
             if (isFlameLit) {
-                const volume = Math.min(1, avg / 128);
                 const flameHeight = 0.2 + volume * 0.3;
                 flame.setAttribute('height', flameHeight);
                 flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
