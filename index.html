@@ -101,7 +101,6 @@
     >
         <a-assets>
             <audio id="bg-music" src="./message.mp3" preload="auto" loop></audio>
-            <img id="flame-texture" src="https://png.pngtree.com/png-clipart/20190611/original/pngtree-fire-particle-effects-png-image_3009882.jpg">
         </a-assets>
 
         <a-camera
@@ -112,11 +111,14 @@
 
         <a-entity mindar-image-target="targetIndex: 0">
             <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
-                <!-- 3D модель свічки -->
-                <a-gltf-model id="candle-body" src="./candle.glb" position="0 0 0"></a-gltf-model>
+                <!-- Тіло свічки (циліндр) -->
+                <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" color="#FFD700" material="opacity: 1; transparent: false"></a-cylinder>
                 
-                <!-- Полум'я з використанням particle-system для живої анімації -->
-                <a-entity id="flame" position="0 0.4 0" rotation="-90 0 0" particle-system="texture: #flame-texture; color: #FFA500,#FF4500,#FF0000; blending: additive; size: 0.05 0.2; particleCount: 100; maxAge: 1; velocityValue: 0 1 0; velocitySpread: 0.1 0.2 0.1; accelerationValue: 0 0.5 0; opacity: 1 0 0; rotation: true"></a-entity>
+                <!-- Полум'я (конус, який буде масштабуватися по Y) -->
+                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FF4500" emissive="#FF4500" emissive-intensity="0.5" material="opacity: 0.8; transparent: true">
+                    <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
+                    <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
+                </a-cone>
                 
                 <!-- Світло від полум'я -->
                 <a-light id="flame-light" type="point" color="#FF4500" intensity="1" distance="5" position="0 0.45 0"></a-light>
@@ -149,9 +151,6 @@
         const micBtn = document.querySelector('#mic-btn');
 
         let audioContext, analyser, dataArray, micStream;
-        let baseVelocityY = 1;
-        let baseAccelerationY = 0.5;
-        let baseSizeMax = 0.2;
 
         // Компонент для обробки сенсорних жестів
         AFRAME.registerComponent('touch-gestures', {
@@ -245,19 +244,17 @@
             const avg = sum / dataArray.length;
             const volume = Math.min(1, avg / 128); // Нормалізуємо до 0-1
 
-            // Зміна висоти та видовження полум'я через velocity та acceleration
-            const velocityY = baseVelocityY + volume * 1;
-            const accelerationY = baseAccelerationY + volume * 0.5;
-            const sizeMax = baseSizeMax + volume * 0.1;
-            flame.setAttribute('particle-system', {
-                velocityValue: `0 ${velocityY} 0`,
-                accelerationValue: `0 ${accelerationY} 0`,
-                size: `0.05 ${sizeMax}`
-            });
+            // Зміна висоти полум'я (видовження)
+            const flameHeight = 0.2 + volume * 0.3;
+            flame.setAttribute('height', flameHeight);
+            flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
 
             // Зміна яскравості світла
             const lightIntensity = 1 + volume * 4;
             flameLight.setAttribute('intensity', lightIntensity);
+
+            // Зміна emissive-intensity для полум'я
+            flame.setAttribute('emissive-intensity', 0.5 + volume * 1.5);
 
             requestAnimationFrame(updateFlame);
         }
@@ -317,14 +314,15 @@
                 micBtn.classList.add('off');
                 micBtn.textContent = 'Увімкнути мікрофон';
                 // Повернути полум'я до базового стану
-                flame.setAttribute('particle-system', {
-                    velocityValue: `0 ${baseVelocityY} 0`,
-                    accelerationValue: `0 ${baseAccelerationY} 0`,
-                    size: `0.05 ${baseSizeMax}`
-                });
+                flame.setAttribute('height', 0.2);
+                flame.setAttribute('position', '0 0.45 0');
                 flameLight.setAttribute('intensity', 1);
+                flame.setAttribute('emissive-intensity', 0.5);
             }
         });
     </script>
 </body>
 </html>
+
+</html>
+
