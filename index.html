@@ -101,7 +101,7 @@
     >
         <a-assets>
             <audio id="bg-music" src="./message.mp3" preload="auto" loop></audio>
-            <img id="candle-texture" src="./tilo.png">
+            <img id="candle-texture" src="./tilo.png" crossorigin="anonymous">
         </a-assets>
 
         <a-camera
@@ -113,10 +113,27 @@
         <a-entity mindar-image-target="targetIndex: 0">
             <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
                 <!-- Тіло свічки з текстурою -->
-                <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" src="#candle-texture" material="opacity: 1; transparent: false"></a-cylinder>
+                <a-cylinder 
+                    id="candle-body" 
+                    position="0 0 0" 
+                    radius="0.1" 
+                    height="0.8" 
+                    material="src: #candle-texture; transparent: true; opacity: 1; side: double"
+                ></a-cylinder>
                 
                 <!-- Полум'я з градієнтом кольорів прапора України -->
-                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FFD700" material="shader: gradient; topColor: #FFD700; bottomColor: #0057B7; opacity: 0.8; transparent: true" emissive="#FFD700" emissive-intensity="0" visible="false">
+                <a-cone 
+                    id="flame" 
+                    position="0 0.45 0" 
+                    radius-bottom="0.05" 
+                    radius-top="0" 
+                    height="0.2" 
+                    color="#FFD700" 
+                    material="shader: gradient; topColor: #FFD700; bottomColor: #0057B7; opacity: 0.8; transparent: true" 
+                    emissive="#FFD700" 
+                    emissive-intensity="0" 
+                    visible="false"
+                >
                     <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
                     <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
                 </a-cone>
