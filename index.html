@@ -101,6 +101,7 @@
     >
         <a-assets>
             <audio id="bg-music" src="./message.mp3" preload="auto" loop></audio>
+            <img id="candle-texture" src="./tilo.png">
         </a-assets>
 
         <a-camera
@@ -112,7 +113,7 @@
         <a-entity mindar-image-target="targetIndex: 0">
             <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
                 <!-- Тіло свічки (циліндр) -->
-                <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" color="#FFD700" material="opacity: 1; transparent: false"></a-cylinder>
+                <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" material="src: #candle-texture; transparent: false; opacity: 1"></a-cylinder>
                 
                 <!-- Полум'я (конус, який буде масштабуватися по Y) -->
                 <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FF4500" emissive="#FF4500" emissive-intensity="0.5" material="opacity: 0.8; transparent: true" visible="false">
@@ -254,7 +255,7 @@
 
             if (isFlameOn) {
                 // Зміна висоти полум'я (видовження)
-                const flameHeight = 0.2 + volume * 0.3;
+                const flameHeight = 0.2 + volume * 0.5; // Збільшено множник з 0.3 до 0.5
                 flame.setAttribute('height', flameHeight);
                 flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
 
