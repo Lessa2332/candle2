@@ -255,16 +255,16 @@
 
             if (isFlameOn) {
                 // Зміна висоти полум'я (видовження)
-                const flameHeight = 0.2 + volume * 0.5; // Збільшено множник з 0.3 до 0.5
+                const flameHeight = 0.2 + volume * 0.9; // Збільшено множник з 0.3 до 0.5
                 flame.setAttribute('height', flameHeight);
                 flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
 
                 // Зміна яскравості світла
-                const lightIntensity = 1 + volume * 4;
+                const lightIntensity = 1 + volume * 6;
                 flameLight.setAttribute('intensity', lightIntensity);
 
                 // Зміна emissive-intensity для полум'я
-                flame.setAttribute('emissive-intensity', 0.5 + volume * 1.5);
+                flame.setAttribute('emissive-intensity', 0.5 + volume * 2);
             }
 
             requestAnimationFrame(updateFlame);
@@ -337,3 +337,4 @@
     </script>
 </body>
 </html>
+
