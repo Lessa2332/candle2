@@ -6,9 +6,9 @@
     <meta name="description" content="AR-сцена зі свічкою для дітей">
     <title>🕯️«Свічка на долоні» 🔥</title>
 
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js  "></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js  "></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js  "></script>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
     
     <style>
         html, body {
@@ -115,13 +115,13 @@
                 <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" color="#FFD700" material="opacity: 1; transparent: false"></a-cylinder>
                 
                 <!-- Полум'я (конус, який буде масштабуватися по Y) -->
-                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FF4500" emissive="#FF4500" emissive-intensity="0.5" material="opacity: 0.8; transparent: true">
+                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FF4500" emissive="#FF4500" emissive-intensity="0.5" material="opacity: 0.8; transparent: true" visible="false">
                     <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
                     <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
                 </a-cone>
                 
                 <!-- Світло від полум'я -->
-                <a-light id="flame-light" type="point" color="#FF4500" intensity="1" distance="5" position="0 0.45 0"></a-light>
+                <a-light id="flame-light" type="point" color="#FF4500" intensity="1" distance="5" position="0 0.45 0" visible="false"></a-light>
             </a-entity>
         </a-entity>
     </a-scene>
@@ -151,6 +151,7 @@
         const micBtn = document.querySelector('#mic-btn');
 
         let audioContext, analyser, dataArray, micStream;
+        let isFlameOn = false; // Стан полум'я
 
         // Компонент для обробки сенсорних жестів
         AFRAME.registerComponent('touch-gestures', {
@@ -244,17 +245,26 @@
             const avg = sum / dataArray.length;
             const volume = Math.min(1, avg / 128); // Нормалізуємо до 0-1
 
-            // Зміна висоти полум'я (видовження)
-            const flameHeight = 0.2 + volume * 0.3;
-            flame.setAttribute('height', flameHeight);
-            flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
+            // Активація полум'я при достатній гучності
+            if (volume > 0.2 && !isFlameOn) { // Поріг гучності для активації полум'я
+                isFlameOn = true;
+                flame.setAttribute('visible', 'true');
+                flameLight.setAttribute('visible', 'true');
+            }
 
-            // Зміна яскравості світла
-            const lightIntensity = 1 + volume * 4;
-            flameLight.setAttribute('intensity', lightIntensity);
+            if (isFlameOn) {
+                // Зміна висоти полум'я (видовження)
+                const flameHeight = 0.2 + volume * 0.3;
+                flame.setAttribute('height', flameHeight);
+                flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
 
-            // Зміна emissive-intensity для полум'я
-            flame.setAttribute('emissive-intensity', 0.5 + volume * 1.5);
+                // Зміна яскравості світла
+                const lightIntensity = 1 + volume * 4;
+                flameLight.setAttribute('intensity', lightIntensity);
+
+                // Зміна emissive-intensity для полум'я
+                flame.setAttribute('emissive-intensity', 0.5 + volume * 1.5);
+            }
 
             requestAnimationFrame(updateFlame);
         }
@@ -313,7 +323,10 @@
                 analyser = null;
                 micBtn.classList.add('off');
                 micBtn.textContent = 'Увімкнути мікрофон';
-                // Повернути полум'я до базового стану
+                // Повернути полум'я до початкового стану (вимкнено)
+                isFlameOn = false;
+                flame.setAttribute('visible', 'false');
+                flameLight.setAttribute('visible', 'false');
                 flame.setAttribute('height', 0.2);
                 flame.setAttribute('position', '0 0.45 0');
                 flameLight.setAttribute('intensity', 1);
