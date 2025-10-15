@@ -110,30 +110,21 @@
             look-controls="enabled: false"
         ></a-camera>
 
-        <!-- Додаємо фонове освітлення -->
-        <a-light type="ambient" intensity="0.5" color="#FFFFFF"></a-light>
-
-        <!-- Свічка, спільна для всіх маркерів -->
-        <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
-            <!-- Тіло свічки (циліндр) -->
-            <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" material="src: #candle-texture; side: double; repeat: 1 1; transparent: false; opacity: 1"></a-cylinder>
-            
-            <!-- Полум'я (конус, який буде масштабуватися по Y) -->
-            <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FF4500" emissive="#FF4500" emissive-intensity="0.5" material="opacity: 0.8; transparent: true" visible="false">
-                <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
-                <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
-            </a-cone>
-            
-            <!-- Світло від полум'я -->
-            <a-light id="flame-light" type="point" color="#FF4500" intensity="1" distance="5" position="0 0.45 0" visible="false"></a-light>
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
+                <!-- Тіло свічки (циліндр) -->
+                <a-cylinder id="candle-body" position="0 0 0" radius="0.1" height="0.8" material="src: #candle-texture; transparent: false; opacity: 1"></a-cylinder>
+                
+                <!-- Полум'я (конус, який буде масштабуватися по Y) -->
+                <a-cone id="flame" position="0 0.45 0" radius-bottom="0.05" radius-top="0" height="0.2" color="#FF4500" emissive="#FF4500" emissive-intensity="0.5" material="opacity: 0.8; transparent: true" visible="false">
+                    <a-animation attribute="position" from="0 0.45 0" to="0 0.47 0" dur="500" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
+                    <a-animation attribute="scale" from="1 1 1" to="1 1.1 1" dur="300" direction="alternate" repeat="indefinite" easing="ease-in-out"></a-animation>
+                </a-cone>
+                
+                <!-- Світло від полум'я -->
+                <a-light id="flame-light" type="point" color="#FF4500" intensity="1" distance="5" position="0 0.45 0" visible="false"></a-light>
+            </a-entity>
         </a-entity>
-
-        <!-- Маркер 1 -->
-        <a-entity mindar-image-target="targetIndex: 0"></a-entity>
-        <!-- Маркер 2 -->
-        <a-entity mindar-image-target="targetIndex: 1"></a-entity>
-        <!-- Маркер 3 -->
-        <a-entity mindar-image-target="targetIndex: 2"></a-entity>
     </a-scene>
 
     <div class="controls">
@@ -152,7 +143,7 @@
 
         // Посилання на елементи
         const loader = document.querySelector('#loader');
-        const targetEntities = document.querySelectorAll('[mindar-image-target]');
+        const targetEntity = document.querySelector('[mindar-image-target]');
         const candle = document.querySelector('#candle');
         const flame = document.querySelector('#flame');
         const flameLight = document.querySelector('#flame-light');
@@ -162,16 +153,6 @@
 
         let audioContext, analyser, dataArray, micStream;
         let isFlameOn = false; // Стан полум'я
-        let activeTargets = 0; // Лічильник активних маркерів
-
-        // Перевірка завантаження текстури
-        const textureImg = document.querySelector('#candle-texture');
-        textureImg.addEventListener('load', () => {
-            console.log('Текстура tilo.png успішно завантажена');
-        });
-        textureImg.addEventListener('error', () => {
-            console.error('Помилка завантаження текстури tilo.png. Перевірте шлях до файлу або його формат.');
-        });
 
         // Компонент для обробки сенсорних жестів
         AFRAME.registerComponent('touch-gestures', {
@@ -274,51 +255,45 @@
 
             if (isFlameOn) {
                 // Зміна висоти полум'я (видовження)
-                const flameHeight = 0.2 + volume * 0.5;
+                const flameHeight = 0.2 + volume * 0.9; // Збільшено множник з 0.3 до 0.5
                 flame.setAttribute('height', flameHeight);
                 flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
 
                 // Зміна яскравості світла
-                const lightIntensity = 1 + volume * 4;
+                const lightIntensity = 1 + volume * 6;
                 flameLight.setAttribute('intensity', lightIntensity);
 
                 // Зміна emissive-intensity для полум'я
-                flame.setAttribute('emissive-intensity', 0.5 + volume * 1.5);
+                flame.setAttribute('emissive-intensity', 0.5 + volume * 2);
             }
 
             requestAnimationFrame(updateFlame);
         }
 
-        // Логіка відстеження маркерів
-        if (targetEntities.length > 0) {
-            targetEntities.forEach((target, index) => {
-                target.addEventListener('targetFound', () => {
-                    console.log(`🎯 Маркер ${index} знайдено! Свічка з'явилася.`);
-                    activeTargets += 1;
-                    loader.style.display = 'none';
-                    if (candle) {
-                        candle.setAttribute('visible', 'true');
-                    }
-                    if (bgMusic && bgMusic.paused) {
-                        bgMusic.play().catch(e => console.log("🔇 Помилка відтворення музики:", e));
-                        soundBtn.classList.remove('off');
-                        soundBtn.textContent = 'Вимкнути звук';
-                    }
-                });
+        // Логіка відстеження маркера
+        if (targetEntity) {
+            targetEntity.addEventListener('targetFound', () => {
+                console.log("🎯 Маркер знайдено! Свічка з'явилася.");
+                loader.style.display = 'none';
+                if (candle) {
+                    candle.setAttribute('visible', 'true');
+                }
+                if (bgMusic && bgMusic.paused) {
+                    bgMusic.play().catch(e => console.log("🔇 Помилка відтворення музики:", e));
+                    soundBtn.classList.remove('off');
+                    soundBtn.textContent = 'Вимкнути звук';
+                }
+            });
 
-                target.addEventListener('targetLost', () => {
-                    console.log(`ℹ️ Маркер ${index} втрачено.`);
-                    activeTargets -= 1;
-                    if (activeTargets <= 0) {
-                        if (candle) {
-                            candle.setAttribute('visible', 'false');
-                        }
-                        if (bgMusic && !bgMusic.paused) bgMusic.pause();
-                        loader.style.display = 'flex';
-                        loader.querySelector('.pulse').textContent = '🕯️ Свічка на долоні 🔥';
-                        loader.querySelector('div[style]').textContent = 'Наведи камеру на маркер! 😊🔥';
-                    }
-                });
+            targetEntity.addEventListener('targetLost', () => {
+                console.log("ℹ️ Маркер втрачено.");
+                if (candle) {
+                    candle.setAttribute('visible', 'false');
+                }
+                if (bgMusic && !bgMusic.paused) bgMusic.pause();
+                loader.style.display = 'flex';
+                loader.querySelector('.pulse').textContent = '🕯️ Свічка на долоні 🔥';
+                loader.querySelector('div[style]').textContent = 'Наведи камеру на маркер! 😊🔥';
             });
         } else {
             console.error('Елемент mindar-image-target не знайдено!');
@@ -362,3 +337,4 @@
     </script>
 </body>
 </html>
+
