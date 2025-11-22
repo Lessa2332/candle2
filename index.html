@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
@@ -97,6 +97,21 @@
             text-align: center;
             display: none;
         }
+        
+        .status {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -107,6 +122,10 @@
     
     <div class="instruction" id="instruction">
         Подуй на свічку або скажи щось, щоб її запалити! 💨
+    </div>
+    
+    <div class="status" id="status">
+        Полум'я запалено! Співай або говори, щоб змінювати полум'я! 🎵🔥
     </div>
 
     <a-scene
@@ -166,6 +185,7 @@
         // Посилання на елементи
         const loader = document.querySelector('#loader');
         const instruction = document.querySelector('#instruction');
+        const status = document.querySelector('#status');
         const targetEntity = document.querySelector('[mindar-image-target]');
         const candle = document.querySelector('#candle');
         const flame = document.querySelector('#flame');
@@ -178,12 +198,15 @@
         let audioContext, analyser, dataArray, micStream;
         let isFlameOn = false; // Стан полум'я
         let breathThreshold = 0.3; // Поріг для виявлення подиху
-        let silenceCounter = 0; // Лічильник тиші
-        let silenceThreshold = 10; // Кількість кадрів тиші для вимкнення полум'я
+        let isCandleLit = false; // Чи запалена свічка
 
         // Компонент для обробки сенсорних жестів
         AFRAME.registerComponent('touch-gestures', {
-            // ... (зберегти оригінальний код жести)
+            schema: {
+                minScale: { type: 'number', default: 0.2 },
+                maxScale: { type: 'number', default: 3.0 },
+                rotationSpeed: { type: 'number', default: 2.0 }
+            },
             init: function () {
                 this.isRotating = false;
                 this.isPinching = false;
@@ -253,8 +276,8 @@
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioContext.createMediaStreamSource(micStream);
                 analyser = audioContext.createAnalyser();
-                analyser.fftSize = 256;
-                analyser.smoothingTimeConstant = 0.3; // Менше згладжування для швидшої реакції
+                analyser.fftSize = 2048; // Збільшено для кращого аналізу висоти
+                analyser.smoothingTimeConstant = 0.5;
                 source.connect(analyser);
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
                 micBtn.classList.remove('off');
@@ -270,7 +293,29 @@
             }
         }
 
-        // Функція для оновлення полум'я на основі гучності
+        // Функція для знаходження основної частоти (висоти звуку)
+        function getFundamentalFrequency() {
+            if (!analyser) return 0;
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Знаходимо найвищу амплітуду
+            let maxAmplitude = 0;
+            let fundamentalFreq = 0;
+            
+            for (let i = 0; i < dataArray.length; i++) {
+                if (dataArray[i] > maxAmplitude) {
+                    maxAmplitude = dataArray[i];
+                    fundamentalFreq = i;
+                }
+            }
+            
+            // Перетворюємо в герци
+            const nyquist = audioContext.sampleRate / 2;
+            return (fundamentalFreq / dataArray.length) * nyquist;
+        }
+
+        // Функція для оновлення полум'я на основі гучності та висоти звуку
         function updateFlame() {
             if (!analyser) return;
             
@@ -281,44 +326,62 @@
             }
             const avg = sum / dataArray.length;
             const volume = Math.min(1, avg / 128); // Нормалізуємо до 0-1
-
+            
+            // Отримуємо висоту звуку
+            const frequency = getFundamentalFrequency();
+            
             // Активація полум'я при достатній гучності (подих)
-            if (volume > breathThreshold && !isFlameOn) {
+            if (!isCandleLit && volume > breathThreshold) {
+                isCandleLit = true;
                 isFlameOn = true;
                 flame.setAttribute('visible', 'true');
                 flameLight.setAttribute('visible', 'true');
-                silenceCounter = 0;
                 
-                // Сховати інструкцію після запалювання
+                // Сховати інструкцію та показати статус
                 instruction.style.display = 'none';
+                status.style.display = 'block';
             }
 
-            // Якщо полум'я горить
-            if (isFlameOn) {
-                // Вимкнення полум'я після тривалої тиші
-                if (volume < 0.1) {
-                    silenceCounter++;
-                    if (silenceCounter > silenceThreshold) {
-                        isFlameOn = false;
-                        flame.setAttribute('visible', 'false');
-                        flameLight.setAttribute('visible', 'false');
-                        // Показати інструкцію знову
-                        instruction.style.display = 'block';
-                    }
-                } else {
-                    silenceCounter = 0;
+            // Якщо свічка запалена
+            if (isCandleLit) {
+                // Реагуємо на висоту звуку
+                if (frequency > 0 && volume > 0.1) {
+                    // Висота звуку впливає на колір полум'я
+                    let hue = (frequency / 1000) * 60; // Від червоного до жовтого
+                    hue = Math.min(60, Math.max(0, hue)); // Обмежуємо діапазон
                     
-                    // Зміна висоти полум'я (видовження)
+                    // Гучність впливає на розмір полум'я
                     const flameHeight = 0.2 + volume * 0.5;
                     flame.setAttribute('height', flameHeight);
                     flame.setAttribute('position', `0 ${0.4 + flameHeight / 2} 0`);
-
+                    
+                    // Зміна кольору полум'я на основі висоти звуку
+                    const color = `hsl(${40 - hue}, 100%, 50%)`; // Від червоного до жовтого
+                    flame.setAttribute('color', color);
+                    flame.setAttribute('emissive', color);
+                    
                     // Зміна яскравості світла
                     const lightIntensity = 1 + volume * 6;
                     flameLight.setAttribute('intensity', lightIntensity);
-
+                    
                     // Зміна emissive-intensity для полум'я
                     flame.setAttribute('emissive-intensity', 0.5 + volume * 2);
+                    
+                    // Додаткова анімація при високих звуках
+                    if (frequency > 800) {
+                        flame.setAttribute('scale', '1.2 1.2 1.2');
+                    } else {
+                        flame.setAttribute('scale', '1 1 1');
+                    }
+                } else {
+                    // Стан спокою - невелике полум'я
+                    flame.setAttribute('height', 0.2);
+                    flame.setAttribute('position', '0 0.45 0');
+                    flame.setAttribute('color', '#FF4500');
+                    flame.setAttribute('emissive', '#FF4500');
+                    flame.setAttribute('scale', '1 1 1');
+                    flameLight.setAttribute('intensity', 1);
+                    flame.setAttribute('emissive-intensity', 0.5);
                 }
             }
 
@@ -350,8 +413,13 @@
                 loader.querySelector('.pulse').textContent = '🕯️ Свічка на долоні 🔥';
                 loader.querySelector('div[style]').textContent = 'Наведи камеру на маркер! 😊🔥';
                 
-                // Сховати інструкцію при втраті маркера
+                // Сховати інструкцію та статус при втраті маркера
                 instruction.style.display = 'none';
+                status.style.display = 'none';
+                
+                // Скинути стан свічки
+                isCandleLit = false;
+                isFlameOn = false;
             });
         } else {
             console.error('Елемент mindar-image-target не знайдено!');
@@ -382,20 +450,24 @@
                 analyser = null;
                 micBtn.classList.add('off');
                 micBtn.textContent = 'Увімкнути мікрофон';
-                // Повернути полум'я до початкового стану (вимкнено)
+                // Повернути полум'я до початкового стану
+                isCandleLit = false;
                 isFlameOn = false;
                 flame.setAttribute('visible', 'false');
                 flameLight.setAttribute('visible', 'false');
                 flame.setAttribute('height', 0.2);
                 flame.setAttribute('position', '0 0.45 0');
+                flame.setAttribute('color', '#FF4500');
+                flame.setAttribute('emissive', '#FF4500');
+                flame.setAttribute('scale', '1 1 1');
                 flameLight.setAttribute('intensity', 1);
                 flame.setAttribute('emissive-intensity', 0.5);
                 
-                // Сховати інструкцію
+                // Сховати інструкцію та статус
                 instruction.style.display = 'none';
+                status.style.display = 'none';
             }
         });
     </script>
 </body>
 </html>
-
